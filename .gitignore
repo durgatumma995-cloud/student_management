@@ -1,0 +1,6 @@
+.coverage
+__pycache__/
+*.pyc
+.pytest_cache/
+integration_test.db
+app/integration.py
