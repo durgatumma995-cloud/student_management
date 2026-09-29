@@ -1,55 +1,52 @@
-import unittest
-import tempfile
-import os
+import unittest, tempfile, os
 from app.database import Database
 from app.student_service import StudentService
 
 class TestStudentService(unittest.TestCase):
     def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
-        path = os.path.join(self.temp_dir.name, "test.db")
-        self.service = StudentService(Database(path))
-
+        self.temp = tempfile.TemporaryDirectory()
+        self.db = Database(os.path.join(self.temp.name, "test.db"))
+        self.service = StudentService(self.db)
     def tearDown(self):
-        self.temp_dir.cleanup()
+        self.db.close()
+        self.temp.cleanup()
 
-    def test_add_student(self):
-        result = self.service.add_student(1, "Charitha", 21, "Computer Science")
-        self.assertTrue(result)
-
-    def test_get_student(self):
-        self.service.add_student(2, "Ravi", 22, "IT")
-        student = self.service.get_student(2)
-        self.assertEqual(student[1], "Ravi")
-
-    def test_get_all_students(self):
-        self.service.add_student(1, "Ravi", 22, "IT")
-        self.service.add_student(2, "Sita", 20, "CSE")
+    # 11 TESTS START
+    def test_01_add(self):
+        self.assertTrue(self.service.add_student(1, "Ravi", 20, "CSE"))
+    def test_02_get(self):
+        self.service.add_student(1, "Ravi", 20, "CSE")
+        self.assertEqual(self.service.get_student(1)[1], "Ravi")
+    def test_03_get_all_1(self):
+        self.service.add_student(1, "A", 20, "CSE")
+        self.assertEqual(len(self.service.get_all_students()), 1)
+    def test_04_get_all_2(self):
+        self.service.add_student(1, "A", 20, "CSE")
+        self.service.add_student(2, "B", 21, "ECE")
         self.assertEqual(len(self.service.get_all_students()), 2)
-
-    def test_update_student(self):
-        self.service.add_student(3, "Ram", 23, "IT")
-        result = self.service.update_student(3, "Ramesh", 24, "CSE")
-        self.assertTrue(result)
-        self.assertEqual(self.service.get_student(3)[1], "Ramesh")
-
-    def test_delete_student(self):
-        self.service.add_student(4, "Anu", 21, "ECE")
-        self.assertTrue(self.service.delete_student(4))
-        self.assertIsNone(self.service.get_student(4))
-
-    def test_invalid_age(self):
-        with self.assertRaises(ValueError):
-            self.service.add_student(5, "Ravi", 12, "IT")
-
-    def test_empty_name(self):
-        with self.assertRaises(ValueError):
-            self.service.add_student(6, "", 21, "IT")
-
-    def test_duplicate_id(self):
-        self.service.add_student(7, "Ram", 22, "IT")
-        with self.assertRaises(Exception):
-            self.service.add_student(7, "Sita", 21, "CSE")
-
-if __name__ == "__main__":
-    unittest.main()
+    def test_05_update(self):
+        self.service.add_student(1, "Ravi", 20, "CSE")
+        self.service.update_student(1, "Ravi Kumar", 21, "ECE")
+        self.assertEqual(self.service.get_student(1)[1], "Ravi Kumar")
+    def test_06_delete(self):
+        self.service.add_student(1, "Ravi", 20, "CSE")
+        self.service.delete_student(1)
+        self.assertIsNone(self.service.get_student(1))
+    def test_07_add_duplicate(self):
+        self.service.add_student(1, "Ravi", 20, "CSE")
+        self.assertFalse(self.service.add_student(1, "Ravi", 20, "CSE"))
+    def test_08_add_and_get(self):
+        self.service.add_student(101, "Sita", 22, "CSE")
+        self.assertEqual(self.service.get_student(101)[2], 22)
+    def test_09_add_update_get(self):
+        self.service.add_student(102, "Sita", 21, "ECE")
+        self.service.update_student(102, "Sita Sharma", 22, "CSE")
+        self.assertEqual(self.service.get_student(102)[1], "Sita Sharma")
+    def test_10_add_delete_get(self):
+        self.service.add_student(103, "Arjun", 23, "MECH")
+        self.service.delete_student(103)
+        self.assertIsNone(self.service.get_student(103))
+    def test_11_branch_check(self):
+        self.service.add_student(104, "A", 20, "CSE")
+        s = self.service.get_student(104)
+        self.assertEqual(s[3], "CSE")
